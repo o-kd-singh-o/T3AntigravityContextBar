@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "t3-antigravity-context-bar"
+version = "1.0.0"
+description = "macOS Menu Bar and CLI live context-window token monitor for T3 Code with Antigravity / Gemini"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+    { name = "T3 Antigravity Context Bar Contributors" }
+]
+classifiers = [
+    "Operating System :: MacOS",
+    "Programming Language :: Python :: 3",
+    "Topic :: Utilities",
+]
+
+[project.scripts]
+t3-antigravity-context-bar = "t3_monitor.__main__:main"
+t3-tokens = "t3_monitor.__main__:main"
+
+[tool.setuptools.packages.find]
+include = ["t3_monitor*"]

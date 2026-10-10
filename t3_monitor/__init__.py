@@ -1,0 +1,3 @@
+"""T3 Code & Antigravity Context Window Monitor."""
+
+__version__ = "0.1.0"
