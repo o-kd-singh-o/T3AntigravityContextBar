@@ -6,6 +6,7 @@ class StatusBarController: NSObject {
     private var monitorService: MonitorService
     private var timer: Timer?
     private var currentSnapshot: SnapshotDTO?
+    private var isRecentThreadsExpanded: Bool = false
 
     init(monitorService: MonitorService) {
         self.monitorService = monitorService
@@ -44,6 +45,16 @@ class StatusBarController: NSObject {
         }
     }
 
+    @objc private func toggleRecentThreads() {
+        isRecentThreadsExpanded.toggle()
+        if let snapshot = currentSnapshot {
+            updateUI(snapshot: snapshot)
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
+            self?.statusItem.button?.performClick(nil)
+        }
+    }
+
     private func updateUI(snapshot: SnapshotDTO) {
         guard let button = statusItem.button else { return }
 
@@ -69,7 +80,8 @@ class StatusBarController: NSObject {
 
         // Active thread header
         if let active = snapshot.active_thread, let m = active.metrics {
-            let wrappedTitle = wrapTitle(active.title, maxLineLength: 26, maxLines: 2)
+            // maxLineLength: 36 allows the title to span the full width of the menu bar window
+            let wrappedTitle = wrapTitle(active.title, maxLineLength: 36, maxLines: 2)
             let titleItem = NSMenuItem(title: wrappedTitle, action: nil, keyEquivalent: "")
             titleItem.attributedTitle = NSAttributedString(
                 string: wrappedTitle,
@@ -139,57 +151,57 @@ class StatusBarController: NSObject {
             menu.addItem(NSMenuItem.separator())
         }
 
-        // Recent threads collapsed under a dropdown menu
+        // Recent threads (inline accordion directly inside the same window)
         let otherThreads = snapshot.threads.filter { t in
             snapshot.active_thread?.thread_id != t.thread_id
         }
 
         if !otherThreads.isEmpty {
-            let recentThreadsTitle = "Recent Threads (\(otherThreads.count)) ▾"
-            let recentThreadsItem = NSMenuItem(title: recentThreadsTitle, action: nil, keyEquivalent: "")
+            let recentThreadsTitle = "Recent Threads (\(otherThreads.count))"
+            let recentThreadsItem = NSMenuItem(title: recentThreadsTitle, action: #selector(toggleRecentThreads), keyEquivalent: "")
+            recentThreadsItem.target = self
             recentThreadsItem.attributedTitle = NSAttributedString(
                 string: recentThreadsTitle,
                 attributes: [.font: NSFont.systemFont(ofSize: 12, weight: .medium)]
             )
+            menu.addItem(recentThreadsItem)
 
-            let recentSubMenu = NSMenu()
-
-            for t in otherThreads {
-                let tokenDesc = t.metrics != nil ? " (\(t.metrics!.formatted_tokens))" : ""
-                let titleTruncated = t.title.count > 20 ? String(t.title.prefix(18)) + "..." : t.title
-                let itemTitle = "● \(titleTruncated)\(tokenDesc)"
-                let threadItem = NSMenuItem(title: itemTitle, action: nil, keyEquivalent: "")
-                
-                let dotColor = t.metrics != nil ? colorFromHex(t.metrics!.color_hex) : NSColor.secondaryLabelColor
-                threadItem.attributedTitle = NSAttributedString(
-                    string: itemTitle,
-                    attributes: [.foregroundColor: dotColor, .font: NSFont.systemFont(ofSize: 11)]
-                )
-
-                // Submenu for thread details
-                let tSubMenu = NSMenu()
-                let addDetail = { (text: String) in
-                    let detailItem = NSMenuItem(title: text, action: nil, keyEquivalent: "")
-                    detailItem.attributedTitle = NSAttributedString(
-                        string: text,
-                        attributes: [.font: NSFont.monospacedSystemFont(ofSize: 10, weight: .regular)]
+            if isRecentThreadsExpanded {
+                for t in otherThreads {
+                    let tokenDesc = t.metrics != nil ? " (\(t.metrics!.formatted_tokens))" : ""
+                    let titleTruncated = t.title.count > 22 ? String(t.title.prefix(20)) + "..." : t.title
+                    let itemTitle = "  ● \(titleTruncated)\(tokenDesc)"
+                    let threadItem = NSMenuItem(title: itemTitle, action: nil, keyEquivalent: "")
+                    
+                    let dotColor = t.metrics != nil ? colorFromHex(t.metrics!.color_hex) : NSColor.secondaryLabelColor
+                    threadItem.attributedTitle = NSAttributedString(
+                        string: itemTitle,
+                        attributes: [.foregroundColor: dotColor, .font: NSFont.systemFont(ofSize: 11)]
                     )
-                    tSubMenu.addItem(detailItem)
+
+                    // Submenu for thread details (context breakdown flyout to the side)
+                    let tSubMenu = NSMenu()
+                    let addDetail = { (text: String) in
+                        let detailItem = NSMenuItem(title: text, action: nil, keyEquivalent: "")
+                        detailItem.attributedTitle = NSAttributedString(
+                            string: text,
+                            attributes: [.font: NSFont.monospacedSystemFont(ofSize: 10, weight: .regular)]
+                        )
+                        tSubMenu.addItem(detailItem)
+                    }
+                    addDetail("Title: \(t.title)")
+                    addDetail("Thread ID: \(t.thread_id)")
+                    addDetail("Status: \(t.status)")
+                    if let tm = t.metrics {
+                        addDetail("Prompt: \(formatNumber(tm.total_prompt_tokens)) tokens (\(Int(tm.percentage.rounded()))%)")
+                        addDetail("Cached: \(formatNumber(tm.cached_tokens)) tokens (\(String(format: "%.1f", tm.cache_ratio))%)")
+                    }
+                    addDetail("Updated: \(t.updated_at)")
+                    threadItem.submenu = tSubMenu
+                    menu.addItem(threadItem)
                 }
-                addDetail("Title: \(t.title)")
-                addDetail("Thread ID: \(t.thread_id)")
-                addDetail("Status: \(t.status)")
-                if let tm = t.metrics {
-                    addDetail("Prompt: \(formatNumber(tm.total_prompt_tokens)) tokens (\(Int(tm.percentage.rounded()))%)")
-                    addDetail("Cached: \(formatNumber(tm.cached_tokens)) tokens (\(String(format: "%.1f", tm.cache_ratio))%)")
-                }
-                addDetail("Updated: \(t.updated_at)")
-                threadItem.submenu = tSubMenu
-                recentSubMenu.addItem(threadItem)
             }
 
-            recentThreadsItem.submenu = recentSubMenu
-            menu.addItem(recentThreadsItem)
             menu.addItem(NSMenuItem.separator())
         }
 
@@ -235,7 +247,7 @@ class StatusBarController: NSObject {
         NSApplication.shared.terminate(nil)
     }
 
-    private func wrapTitle(_ text: String, maxLineLength: Int = 26, maxLines: Int = 2) -> String {
+    private func wrapTitle(_ text: String, maxLineLength: Int = 36, maxLines: Int = 2) -> String {
         let words = text.components(separatedBy: .whitespacesAndNewlines).filter { !$0.isEmpty }
         guard !words.isEmpty else { return text }
 
