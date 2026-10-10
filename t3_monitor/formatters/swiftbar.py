@@ -3,8 +3,8 @@
 from t3_monitor.engine import MonitorSnapshot, StatusLevel, format_token_k
 
 
-def _render_progress_bar(pct: float, width: int = 14) -> str:
-    """Render a text progress bar like [███████░░░░░░░]."""
+def _render_progress_bar(pct: float, width: int = 11) -> str:
+    """Render a compact text progress bar like [███████░░░░]."""
     clamped = max(0.0, min(100.0, pct))
     filled = int(round((clamped / 100.0) * width))
     empty = width - filled
@@ -31,33 +31,33 @@ def format_swiftbar(snapshot: MonitorSnapshot) -> str:
     if active and active.metrics:
         m = active.metrics
         title_display = active.record.title
-        if len(title_display) > 45:
-            title_display = title_display[:42] + "..."
+        if len(title_display) > 36:
+            title_display = title_display[:33] + "..."
 
         # Active Thread Section
-        lines.append(f"Active Thread: {title_display} | size=13 bold=true")
+        lines.append(f"Active Thread: {title_display} | size=12 bold=true")
         lines.append(
             f"{_render_progress_bar(m.percentage)} {m.formatted_tokens} / "
-            f"{format_token_k(snapshot.config.max_threshold)} ({int(round(m.percentage))}%) | font=Menlo size=12"
+            f"{format_token_k(snapshot.config.max_threshold)} ({int(round(m.percentage))}%) | font=Menlo size=11"
         )
-        lines.append(f"{status_icon} {m.recommendation} | size=12 color={m.color_hex}")
+        lines.append(f"{status_icon} {m.recommendation} | size=11 color={m.color_hex}")
         lines.append("---")
 
         # Context Breakdown Submenu
-        lines.append("Context Breakdown | size=12")
-        lines.append(f"-- Total Active Context: {m.tokens.total_prompt_tokens:,} tokens | font=Menlo")
+        lines.append("Context Breakdown | size=11")
+        lines.append(f"-- Total Active: {m.tokens.total_prompt_tokens:,} tokens | font=Menlo")
         lines.append(
-            f"-- Cached Context: {m.tokens.cached_tokens:,} tokens ({m.cache_ratio:.1f}%) | font=Menlo"
+            f"-- Cached: {m.tokens.cached_tokens:,} tokens ({m.cache_ratio:.1f}%) | font=Menlo"
         )
-        lines.append(f"-- New Turn Input: {m.tokens.uncached_tokens:,} tokens | font=Menlo")
-        lines.append(f"-- Latest Output: {m.tokens.completion_tokens:,} tokens | font=Menlo")
+        lines.append(f"-- New Input: {m.tokens.uncached_tokens:,} tokens | font=Menlo")
+        lines.append(f"-- Last Output: {m.tokens.completion_tokens:,} tokens | font=Menlo")
         if m.tokens.thought_tokens:
-            lines.append(f"-- Reasoning / Thought: {m.tokens.thought_tokens:,} tokens | font=Menlo")
-        lines.append(f"-- Remaining Headroom: {m.remaining_tokens:,} tokens | font=Menlo")
+            lines.append(f"-- Reasoning: {m.tokens.thought_tokens:,} tokens | font=Menlo")
+        lines.append(f"-- Remaining: {m.remaining_tokens:,} tokens | font=Menlo")
         lines.append("---")
     elif active:
-        title_display = active.record.title[:45]
-        lines.append(f"Active Thread: {title_display} | size=13 bold=true")
+        title_display = active.record.title[:36]
+        lines.append(f"Active Thread: {title_display} | size=12 bold=true")
         lines.append("No token telemetry recorded yet | color=#8b949e")
         lines.append("---")
     else:
@@ -70,11 +70,11 @@ def format_swiftbar(snapshot: MonitorSnapshot) -> str:
         if not (active and t.record.thread_id == active.record.thread_id)
     ]
     if other_threads:
-        lines.append(f"Recent Threads ({len(other_threads)}) | size=12")
+        lines.append(f"Recent Threads ({len(other_threads)}) | size=11")
         for t in other_threads:
             t_title = t.record.title.strip()
-            if len(t_title) > 36:
-                t_title = t_title[:33] + "..."
+            if len(t_title) > 28:
+                t_title = t_title[:25] + "..."
             
             if t.metrics:
                 tok_str = t.metrics.formatted_tokens
@@ -103,7 +103,7 @@ def format_swiftbar(snapshot: MonitorSnapshot) -> str:
     # Thresholds info and controls
     warn_k = format_token_k(snapshot.config.warn_threshold)
     max_k = format_token_k(snapshot.config.max_threshold)
-    lines.append(f"Thresholds: Warn at {warn_k}, Max at {max_k} | size=10 color=#8b949e")
+    lines.append(f"Thresholds: Warn {warn_k}, Max {max_k} | size=10 color=#8b949e")
     lines.append("🔄 Refresh Now | refresh=true")
     lines.append("Open T3 Code | bash=\"/usr/bin/open\" param1=\"-a\" param2=\"T3 Code\" terminal=false")
 

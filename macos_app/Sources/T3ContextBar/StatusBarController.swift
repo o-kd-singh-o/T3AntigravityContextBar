@@ -67,22 +67,22 @@ class StatusBarController: NSObject {
         // Rebuild Menu
         let menu = NSMenu()
 
-        // Active thread header
+        // Active thread header (squished maxLineLength by 20%: 26 -> 21)
         if let active = snapshot.active_thread, let m = active.metrics {
-            let wrappedTitle = wrapTitle(active.title, maxLineLength: 26, maxLines: 2)
+            let wrappedTitle = wrapTitle(active.title, maxLineLength: 21, maxLines: 2)
             let titleItem = NSMenuItem(title: wrappedTitle, action: nil, keyEquivalent: "")
             titleItem.attributedTitle = NSAttributedString(
                 string: wrappedTitle,
-                attributes: [.font: NSFont.boldSystemFont(ofSize: 12)]
+                attributes: [.font: NSFont.boldSystemFont(ofSize: 11.5)]
             )
             menu.addItem(titleItem)
 
-            // Progress bar item (compact single line)
-            let progressText = "\(renderProgressBar(pct: m.percentage, width: 8)) \(m.formatted_tokens) / \(formatK(snapshot.config.max_threshold)) (\(Int(m.percentage.rounded()))%)"
+            // Progress bar item (squished width: 8 -> 6)
+            let progressText = "\(renderProgressBar(pct: m.percentage, width: 6)) \(m.formatted_tokens)/\(formatK(snapshot.config.max_threshold)) (\(Int(m.percentage.rounded()))%)"
             let progressItem = NSMenuItem(title: progressText, action: nil, keyEquivalent: "")
             progressItem.attributedTitle = NSAttributedString(
                 string: progressText,
-                attributes: [.font: NSFont.monospacedSystemFont(ofSize: 11, weight: .regular)]
+                attributes: [.font: NSFont.monospacedSystemFont(ofSize: 10.5, weight: .regular)]
             )
             menu.addItem(progressItem)
 
@@ -90,9 +90,9 @@ class StatusBarController: NSObject {
             let recText: String
             switch m.status_level {
             case "critical":
-                recText = "🔴 Critical: Handoff needed"
+                recText = "🔴 Critical: Handoff"
             case "warning":
-                recText = "🟡 Warning: Plan handoff"
+                recText = "🟡 Warn: Plan handoff"
             default:
                 recText = "🟢 Context Healthy"
             }
@@ -101,7 +101,7 @@ class StatusBarController: NSObject {
                 string: recText,
                 attributes: [
                     .foregroundColor: colorFromHex(m.color_hex),
-                    .font: NSFont.systemFont(ofSize: 11, weight: .medium)
+                    .font: NSFont.systemFont(ofSize: 10.5, weight: .medium)
                 ]
             )
             menu.addItem(recItem)
@@ -112,7 +112,7 @@ class StatusBarController: NSObject {
             let breakdownItem = NSMenuItem(title: "Context Breakdown", action: nil, keyEquivalent: "")
             breakdownItem.attributedTitle = NSAttributedString(
                 string: "Context Breakdown",
-                attributes: [.font: NSFont.systemFont(ofSize: 12)]
+                attributes: [.font: NSFont.systemFont(ofSize: 11.5)]
             )
             let subMenu = NSMenu()
             
@@ -120,13 +120,13 @@ class StatusBarController: NSObject {
                 let item = NSMenuItem(title: "\(label): \(value)", action: nil, keyEquivalent: "")
                 item.attributedTitle = NSAttributedString(
                     string: "\(label): \(value)",
-                    attributes: [.font: NSFont.monospacedSystemFont(ofSize: 11, weight: .regular)]
+                    attributes: [.font: NSFont.monospacedSystemFont(ofSize: 10.5, weight: .regular)]
                 )
                 subMenu.addItem(item)
             }
 
-            addSubItem("Total Context", "\(formatNumber(m.total_prompt_tokens)) tokens")
-            addSubItem("Cached Context", "\(formatNumber(m.cached_tokens)) tokens (\(String(format: "%.1f", m.cache_ratio))%)")
+            addSubItem("Total", "\(formatNumber(m.total_prompt_tokens)) tokens")
+            addSubItem("Cached", "\(formatNumber(m.cached_tokens)) tokens (\(String(format: "%.1f", m.cache_ratio))%)")
             addSubItem("New Input", "\(formatNumber(m.uncached_tokens)) tokens")
             addSubItem("Last Output", "\(formatNumber(m.completion_tokens)) tokens")
             if m.thought_tokens > 0 {
@@ -149,21 +149,21 @@ class StatusBarController: NSObject {
             let recentThreadsItem = NSMenuItem(title: recentThreadsTitle, action: nil, keyEquivalent: "")
             recentThreadsItem.attributedTitle = NSAttributedString(
                 string: recentThreadsTitle,
-                attributes: [.font: NSFont.systemFont(ofSize: 12, weight: .medium)]
+                attributes: [.font: NSFont.systemFont(ofSize: 11.5, weight: .medium)]
             )
 
             let recentSubMenu = NSMenu()
 
             for t in otherThreads {
                 let tokenDesc = t.metrics != nil ? " (\(t.metrics!.formatted_tokens))" : ""
-                let titleTruncated = t.title.count > 20 ? String(t.title.prefix(18)) + "..." : t.title
+                let titleTruncated = t.title.count > 16 ? String(t.title.prefix(14)) + "..." : t.title
                 let itemTitle = "● \(titleTruncated)\(tokenDesc)"
                 let threadItem = NSMenuItem(title: itemTitle, action: nil, keyEquivalent: "")
                 
                 let dotColor = t.metrics != nil ? colorFromHex(t.metrics!.color_hex) : NSColor.secondaryLabelColor
                 threadItem.attributedTitle = NSAttributedString(
                     string: itemTitle,
-                    attributes: [.foregroundColor: dotColor, .font: NSFont.systemFont(ofSize: 11)]
+                    attributes: [.foregroundColor: dotColor, .font: NSFont.systemFont(ofSize: 10.5)]
                 )
 
                 // Submenu for thread details
@@ -198,7 +198,7 @@ class StatusBarController: NSObject {
         refreshItem.target = self
         menu.addItem(refreshItem)
 
-        let quitItem = NSMenuItem(title: "Quit Context Bar", action: #selector(quitApp), keyEquivalent: "q")
+        let quitItem = NSMenuItem(title: "Quit", action: #selector(quitApp), keyEquivalent: "q")
         quitItem.target = self
         menu.addItem(quitItem)
 
@@ -235,7 +235,7 @@ class StatusBarController: NSObject {
         NSApplication.shared.terminate(nil)
     }
 
-    private func wrapTitle(_ text: String, maxLineLength: Int = 26, maxLines: Int = 2) -> String {
+    private func wrapTitle(_ text: String, maxLineLength: Int = 21, maxLines: Int = 2) -> String {
         let words = text.components(separatedBy: .whitespacesAndNewlines).filter { !$0.isEmpty }
         guard !words.isEmpty else { return text }
 
@@ -279,7 +279,7 @@ class StatusBarController: NSObject {
         return lines.joined(separator: "\n")
     }
 
-    private func renderProgressBar(pct: Double, width: Int = 8) -> String {
+    private func renderProgressBar(pct: Double, width: Int = 6) -> String {
         let clamped = max(0.0, min(100.0, pct))
         let filled = Int((clamped / 100.0 * Double(width)).rounded())
         let empty = max(0, width - filled)
