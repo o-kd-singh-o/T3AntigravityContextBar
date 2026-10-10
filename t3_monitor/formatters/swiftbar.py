@@ -64,13 +64,13 @@ def format_swiftbar(snapshot: MonitorSnapshot) -> str:
         lines.append("No active T3 Code threads found | color=#8b949e")
         lines.append("---")
 
-    # Other Threads Section
+    # Recent Threads Section (Collapsed by default under a dropdown arrow)
     other_threads = [
         t for t in snapshot.threads
         if not (active and t.record.thread_id == active.record.thread_id)
     ]
     if other_threads:
-        lines.append(f"Recent Threads ({len(other_threads)}) | size=12 bold=true")
+        lines.append(f"Recent Threads ({len(other_threads)}) ▾ | size=12")
         for t in other_threads:
             t_title = t.record.title.strip()
             if len(t_title) > 36:
@@ -86,18 +86,18 @@ def format_swiftbar(snapshot: MonitorSnapshot) -> str:
                 pct_str = ""
 
             status_tag = f"[{t.record.status}]"
-            lines.append(f"{dot_char} {t_title} ({tok_str}) {status_tag} | color={color} size=11")
+            lines.append(f"-- {dot_char} {t_title} ({tok_str}) {status_tag} | color={color} size=11")
             # Submenu details for this thread
-            lines.append(f"-- Thread ID: {t.record.thread_id} | font=Menlo size=10")
-            lines.append(f"-- Status: {t.record.status} | font=Menlo size=10")
+            lines.append(f"---- Thread ID: {t.record.thread_id} | font=Menlo size=10")
+            lines.append(f"---- Status: {t.record.status} | font=Menlo size=10")
             if t.metrics:
                 lines.append(
-                    f"-- Prompt Tokens: {t.metrics.tokens.total_prompt_tokens:,} ({pct_str} of limit) | font=Menlo size=10"
+                    f"---- Prompt Tokens: {t.metrics.tokens.total_prompt_tokens:,} ({pct_str} of limit) | font=Menlo size=10"
                 )
                 lines.append(
-                    f"-- Cached Tokens: {t.metrics.tokens.cached_tokens:,} ({t.metrics.cache_ratio:.1f}%) | font=Menlo size=10"
+                    f"---- Cached Tokens: {t.metrics.tokens.cached_tokens:,} ({t.metrics.cache_ratio:.1f}%) | font=Menlo size=10"
                 )
-            lines.append(f"-- Updated: {t.record.updated_at} | font=Menlo size=10")
+            lines.append(f"---- Updated: {t.record.updated_at} | font=Menlo size=10")
         lines.append("---")
 
     # Thresholds info and controls

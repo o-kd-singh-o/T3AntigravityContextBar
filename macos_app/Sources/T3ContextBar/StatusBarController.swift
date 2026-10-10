@@ -123,18 +123,20 @@ class StatusBarController: NSObject {
             menu.addItem(NSMenuItem.separator())
         }
 
-        // Recent threads section
+        // Recent threads collapsed under a dropdown menu
         let otherThreads = snapshot.threads.filter { t in
             snapshot.active_thread?.thread_id != t.thread_id
         }
 
         if !otherThreads.isEmpty {
-            let sectionHeader = NSMenuItem(title: "Recent Threads (\(otherThreads.count))", action: nil, keyEquivalent: "")
-            sectionHeader.attributedTitle = NSAttributedString(
-                string: "Recent Threads (\(otherThreads.count))",
-                attributes: [.font: NSFont.boldSystemFont(ofSize: 12)]
+            let recentThreadsTitle = "Recent Threads (\(otherThreads.count)) ▾"
+            let recentThreadsItem = NSMenuItem(title: recentThreadsTitle, action: nil, keyEquivalent: "")
+            recentThreadsItem.attributedTitle = NSAttributedString(
+                string: recentThreadsTitle,
+                attributes: [.font: NSFont.systemFont(ofSize: 12, weight: .medium)]
             )
-            menu.addItem(sectionHeader)
+
+            let recentSubMenu = NSMenu()
 
             for t in otherThreads {
                 let tokenDesc = t.metrics != nil ? "(\(t.metrics!.formatted_tokens))" : ""
@@ -166,8 +168,11 @@ class StatusBarController: NSObject {
                 }
                 addDetail("Updated: \(t.updated_at)")
                 threadItem.submenu = tSubMenu
-                menu.addItem(threadItem)
+                recentSubMenu.addItem(threadItem)
             }
+
+            recentThreadsItem.submenu = recentSubMenu
+            menu.addItem(recentThreadsItem)
             menu.addItem(NSMenuItem.separator())
         }
 
