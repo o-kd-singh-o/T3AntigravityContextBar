@@ -27,16 +27,12 @@ We implemented, tested, and published **`t3-antigravity-context-bar`**, a real-t
    - App Bundle: `T3AntigravityContextBar.app` with Retina icon `macos_app/Resources/AppIcon.icns`.
    - Bundled Python backend: `T3AntigravityContextBar.app/Contents/Resources/t3_monitor/` makes the app completely standalone.
    - Colored dot and live status in menu bar (e.g. `● T3: 98.5k (82%)`).
-   - **Compact UI Profile**:
-     - Narrow width (~220pt) with multi-line word wrapping (`maxLineLength: 26`, up to 3 lines) to display long chat titles cleanly without stretching window width.
-     - Squeezed 8-character progress bar: `[██░░░░░░] 98.5k / 120k (82%)`.
-     - Concise status badges (`🟢 Context Healthy`, `🟡 Warning: Plan handoff`, `🔴 Critical: Handoff needed`).
-     - Removed redundant "Open T3 Code" and threshold legend labels.
-   - **Native Smooth Accordion Presentation (`NSPopover`)**:
-     - Replaced `NSMenu` dismissal tracking with native macOS `NSPopover` to eliminate window reload/screen flicker on interaction.
-     - **Recent Threads Accordion**: Clicking turns the arrow from horizontal `▶` to vertical downwards `▼` and slides the recent threads down using `NSAnimationContext` in the same window.
-     - **Context Breakdown Flyouts**: Dedicated context metric dialog boxes for the active thread and individual recent threads display on click/hover.
-     - Keyboard shortcuts: `⌘R` (Refresh), `⌘Q` (Quit), and `Esc` (Close).
+   - **Stable Menu Bar UI Profile**:
+     - **2-line wrapped title**: Uses `wrapTitle(active.title, maxLineLength: 26, maxLines: 2)` to display long conversation titles neatly across two lines without horizontal truncation or excessive vertical sprawl.
+     - **Native Hover Submenus**: Reverted back to standard native `NSMenu` flyout behavior. Hovering over **"Context Breakdown"** or **"Recent Threads (X) ▾"** immediately opens the options and detailed token breakdown on hover without requiring a click.
+     - **Squeezed 8-character progress bar**: `[██░░░░░░] 98.5k / 120k (82%)`.
+     - **Concise status badges**: `🟢 Context Healthy`, `🟡 Warning: Plan handoff`, `🔴 Critical: Handoff needed`.
+     - Controls: "Refresh Now" (`⌘R`) and "Quit Context Bar" (`⌘Q`).
 
 3. **SwiftBar / xbar Plugin (`plugins/swiftbar/`)**:
    - `plugins/swiftbar/t3_tokens.10s.py` ready to be symlinked to `~/Library/Application Support/SwiftBar/plugins/` via `make install-swiftbar`.
