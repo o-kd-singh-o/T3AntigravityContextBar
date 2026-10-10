@@ -69,28 +69,40 @@ class StatusBarController: NSObject {
 
         // Active thread header
         if let active = snapshot.active_thread, let m = active.metrics {
-            let titleItem = NSMenuItem(title: "Active: \(active.title)", action: nil, keyEquivalent: "")
+            let wrappedTitle = wrapTitle(active.title, maxLineLength: 26, maxLines: 2)
+            let titleItem = NSMenuItem(title: wrappedTitle, action: nil, keyEquivalent: "")
             titleItem.attributedTitle = NSAttributedString(
-                string: "Active: \(active.title)",
-                attributes: [.font: NSFont.boldSystemFont(ofSize: 13)]
+                string: wrappedTitle,
+                attributes: [.font: NSFont.boldSystemFont(ofSize: 12)]
             )
             menu.addItem(titleItem)
 
-            // Progress bar item
-            let progressText = "\(renderProgressBar(pct: m.percentage)) \(m.formatted_tokens) / \(formatK(snapshot.config.max_threshold)) (\(Int(m.percentage.rounded()))%)"
+            // Progress bar item (compact single line)
+            let progressText = "\(renderProgressBar(pct: m.percentage, width: 8)) \(m.formatted_tokens) / \(formatK(snapshot.config.max_threshold)) (\(Int(m.percentage.rounded()))%)"
             let progressItem = NSMenuItem(title: progressText, action: nil, keyEquivalent: "")
             progressItem.attributedTitle = NSAttributedString(
                 string: progressText,
-                attributes: [.font: NSFont.monospacedSystemFont(ofSize: 12, weight: .regular)]
+                attributes: [.font: NSFont.monospacedSystemFont(ofSize: 11, weight: .regular)]
             )
             menu.addItem(progressItem)
 
-            // Recommendation badge
-            let recIcon = m.status_level == "critical" ? "🔴" : (m.status_level == "warning" ? "🟡" : "🟢")
-            let recItem = NSMenuItem(title: "\(recIcon) \(m.recommendation)", action: nil, keyEquivalent: "")
+            // Recommendation badge (compact)
+            let recText: String
+            switch m.status_level {
+            case "critical":
+                recText = "🔴 Critical: Handoff needed"
+            case "warning":
+                recText = "🟡 Warning: Plan handoff"
+            default:
+                recText = "🟢 Context Healthy"
+            }
+            let recItem = NSMenuItem(title: recText, action: nil, keyEquivalent: "")
             recItem.attributedTitle = NSAttributedString(
-                string: "\(recIcon) \(m.recommendation)",
-                attributes: [.foregroundColor: colorFromHex(m.color_hex)]
+                string: recText,
+                attributes: [
+                    .foregroundColor: colorFromHex(m.color_hex),
+                    .font: NSFont.systemFont(ofSize: 11, weight: .medium)
+                ]
             )
             menu.addItem(recItem)
 
@@ -98,6 +110,10 @@ class StatusBarController: NSObject {
 
             // Breakdown submenu
             let breakdownItem = NSMenuItem(title: "Context Breakdown", action: nil, keyEquivalent: "")
+            breakdownItem.attributedTitle = NSAttributedString(
+                string: "Context Breakdown",
+                attributes: [.font: NSFont.systemFont(ofSize: 12)]
+            )
             let subMenu = NSMenu()
             
             let addSubItem = { (label: String, value: String) in
@@ -139,9 +155,9 @@ class StatusBarController: NSObject {
             let recentSubMenu = NSMenu()
 
             for t in otherThreads {
-                let tokenDesc = t.metrics != nil ? "(\(t.metrics!.formatted_tokens))" : ""
-                let titleTruncated = t.title.count > 35 ? String(t.title.prefix(32)) + "..." : t.title
-                let itemTitle = "● \(titleTruncated) \(tokenDesc) [\(t.status)]"
+                let tokenDesc = t.metrics != nil ? " (\(t.metrics!.formatted_tokens))" : ""
+                let titleTruncated = t.title.count > 20 ? String(t.title.prefix(18)) + "..." : t.title
+                let itemTitle = "● \(titleTruncated)\(tokenDesc)"
                 let threadItem = NSMenuItem(title: itemTitle, action: nil, keyEquivalent: "")
                 
                 let dotColor = t.metrics != nil ? colorFromHex(t.metrics!.color_hex) : NSColor.secondaryLabelColor
@@ -160,6 +176,7 @@ class StatusBarController: NSObject {
                     )
                     tSubMenu.addItem(detailItem)
                 }
+                addDetail("Title: \(t.title)")
                 addDetail("Thread ID: \(t.thread_id)")
                 addDetail("Status: \(t.status)")
                 if let tm = t.metrics {
@@ -176,26 +193,12 @@ class StatusBarController: NSObject {
             menu.addItem(NSMenuItem.separator())
         }
 
-        // Config & Controls
-        let configDesc = "Thresholds: Warn \(formatK(snapshot.config.warn_threshold)), Max \(formatK(snapshot.config.max_threshold))"
-        let configItem = NSMenuItem(title: configDesc, action: nil, keyEquivalent: "")
-        configItem.attributedTitle = NSAttributedString(
-            string: configDesc,
-            attributes: [.foregroundColor: NSColor.secondaryLabelColor, .font: NSFont.systemFont(ofSize: 10)]
-        )
-        menu.addItem(configItem)
-
+        // Controls
         let refreshItem = NSMenuItem(title: "Refresh Now", action: #selector(refresh), keyEquivalent: "r")
         refreshItem.target = self
         menu.addItem(refreshItem)
 
-        let openT3Item = NSMenuItem(title: "Open T3 Code", action: #selector(openT3Code), keyEquivalent: "o")
-        openT3Item.target = self
-        menu.addItem(openT3Item)
-
-        menu.addItem(NSMenuItem.separator())
-
-        let quitItem = NSMenuItem(title: "Quit T3 Antigravity Context Bar", action: #selector(quitApp), keyEquivalent: "q")
+        let quitItem = NSMenuItem(title: "Quit Context Bar", action: #selector(quitApp), keyEquivalent: "q")
         quitItem.target = self
         menu.addItem(quitItem)
 
@@ -220,7 +223,7 @@ class StatusBarController: NSObject {
 
     private func buildLoadingMenu() {
         let menu = NSMenu()
-        menu.addItem(NSMenuItem(title: "Checking T3 context tokens...", action: nil, keyEquivalent: ""))
+        menu.addItem(NSMenuItem(title: "Checking T3 tokens...", action: nil, keyEquivalent: ""))
         menu.addItem(NSMenuItem.separator())
         let quitItem = NSMenuItem(title: "Quit", action: #selector(quitApp), keyEquivalent: "q")
         quitItem.target = self
@@ -228,18 +231,55 @@ class StatusBarController: NSObject {
         statusItem.menu = menu
     }
 
-    @objc private func openT3Code() {
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/open")
-        process.arguments = ["-a", "T3 Code"]
-        try? process.run()
-    }
-
     @objc private func quitApp() {
         NSApplication.shared.terminate(nil)
     }
 
-    private func renderProgressBar(pct: Double, width: Int = 14) -> String {
+    private func wrapTitle(_ text: String, maxLineLength: Int = 26, maxLines: Int = 2) -> String {
+        let words = text.components(separatedBy: .whitespacesAndNewlines).filter { !$0.isEmpty }
+        guard !words.isEmpty else { return text }
+
+        var lines: [String] = []
+        var currentLine = ""
+        var wordIdx = 0
+
+        while wordIdx < words.count {
+            let word = words[wordIdx]
+            if lines.count == maxLines - 1 {
+                if currentLine.isEmpty {
+                    currentLine = word
+                } else if currentLine.count + 1 + word.count <= maxLineLength - 3 {
+                    currentLine += " " + word
+                } else {
+                    currentLine += "..."
+                    lines.append(currentLine)
+                    currentLine = ""
+                    break
+                }
+            } else {
+                if currentLine.isEmpty {
+                    currentLine = word
+                } else if currentLine.count + 1 + word.count <= maxLineLength {
+                    currentLine += " " + word
+                } else {
+                    lines.append(currentLine)
+                    currentLine = word
+                }
+            }
+            wordIdx += 1
+        }
+
+        if !currentLine.isEmpty && lines.count < maxLines {
+            if wordIdx < words.count && !currentLine.hasSuffix("...") {
+                currentLine += "..."
+            }
+            lines.append(currentLine)
+        }
+
+        return lines.joined(separator: "\n")
+    }
+
+    private func renderProgressBar(pct: Double, width: Int = 8) -> String {
         let clamped = max(0.0, min(100.0, pct))
         let filled = Int((clamped / 100.0 * Double(width)).rounded())
         let empty = max(0, width - filled)
@@ -251,6 +291,9 @@ class StatusBarController: NSObject {
             return String(format: "%.1fM", Double(count) / 1_000_000.0)
         }
         if count >= 1_000 {
+            if count % 1_000 == 0 {
+                return "\(count / 1_000)k"
+            }
             return String(format: "%.1fk", Double(count) / 1_000.0)
         }
         return "\(count)"
@@ -268,11 +311,11 @@ class StatusBarController: NSObject {
             cleanHex.removeFirst()
         }
         guard cleanHex.count == 6, let rgb = UInt64(cleanHex, radix: 16) else {
-            return NSColor.textColor
+            return NSColor.systemGreen
         }
-        let r = CGFloat((rgb >> 16) & 0xFF) / 255.0
-        let g = CGFloat((rgb >> 8) & 0xFF) / 255.0
-        let b = CGFloat(rgb & 0xFF) / 255.0
+        let r = Double((rgb >> 16) & 0xFF) / 255.0
+        let g = Double((rgb >> 8) & 0xFF) / 255.0
+        let b = Double(rgb & 0xFF) / 255.0
         return NSColor(srgbRed: r, green: g, blue: b, alpha: 1.0)
     }
 }
