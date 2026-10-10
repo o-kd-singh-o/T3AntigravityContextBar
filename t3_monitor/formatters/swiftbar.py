@@ -64,13 +64,13 @@ def format_swiftbar(snapshot: MonitorSnapshot) -> str:
         lines.append("No active T3 Code threads found | color=#8b949e")
         lines.append("---")
 
-    # Recent Threads Section (Collapsed by default under a dropdown arrow)
+    # Recent Threads Section (Collapsed by default under a dropdown submenu)
     other_threads = [
         t for t in snapshot.threads
         if not (active and t.record.thread_id == active.record.thread_id)
     ]
     if other_threads:
-        lines.append(f"Recent Threads ({len(other_threads)}) ▾ | size=12")
+        lines.append(f"Recent Threads ({len(other_threads)}) | size=12")
         for t in other_threads:
             t_title = t.record.title.strip()
             if len(t_title) > 36:

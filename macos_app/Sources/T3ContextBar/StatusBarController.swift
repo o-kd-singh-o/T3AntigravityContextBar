@@ -145,7 +145,7 @@ class StatusBarController: NSObject {
         }
 
         if !otherThreads.isEmpty {
-            let recentThreadsTitle = "Recent Threads (\(otherThreads.count)) ▾"
+            let recentThreadsTitle = "Recent Threads (\(otherThreads.count))"
             let recentThreadsItem = NSMenuItem(title: recentThreadsTitle, action: nil, keyEquivalent: "")
             recentThreadsItem.attributedTitle = NSAttributedString(
                 string: recentThreadsTitle,
