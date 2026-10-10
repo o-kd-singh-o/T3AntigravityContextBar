@@ -1,7 +1,8 @@
 """Pure Python Protocol Buffers decoder for Antigravity telemetry metadata."""
 
+from __future__ import annotations
 from dataclasses import dataclass
-from typing import Optional, List, Tuple, Any
+from typing import Optional, List, Tuple, Any, Union
 
 
 @dataclass(frozen=True)
@@ -30,7 +31,7 @@ def encode_varint(value: int) -> bytes:
     return bytes(res)
 
 
-def decode_varint(stream: bytes | bytearray, pos: int = 0) -> Tuple[int, int]:
+def decode_varint(stream: Union[bytes, bytearray], pos: int = 0) -> Tuple[int, int]:
     """Decode a protobuf varint starting at `pos`.
     
     Returns (value, next_pos).
@@ -51,7 +52,7 @@ def decode_varint(stream: bytes | bytearray, pos: int = 0) -> Tuple[int, int]:
     raise ValueError("Truncated varint stream")
 
 
-def parse_proto(stream: bytes | bytearray) -> List[Tuple[int, int, Any]]:
+def parse_proto(stream: Union[bytes, bytearray]) -> List[Tuple[int, int, Any]]:
     """Parse raw protobuf bytes into a list of (field_number, wire_type, value).
     
     Wire types:

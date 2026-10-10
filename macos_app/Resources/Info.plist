@@ -16,7 +16,11 @@
     <string>APPL</string>
     <key>CFBundleExecutable</key>
     <string>T3AntigravityContextBar</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
     <key>LSUIElement</key>
     <true/>
+    <key>LSApplicationCategoryType</key>
+    <string>public.app-category.developer-tools</string>
 </dict>
 </plist>

@@ -8,19 +8,22 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let fileManager = FileManager.default
         let currentDir = fileManager.currentDirectoryPath
 
-        var candidatePaths = [
-            currentDir,
-            Bundle.main.bundlePath,
-            (Bundle.main.bundlePath as NSString).deletingLastPathComponent,
-            ((Bundle.main.bundlePath as NSString).deletingLastPathComponent as NSString).appendingPathComponent("../..")
-        ]
+        var candidatePaths: [String] = []
 
         if let envPath = ProcessInfo.processInfo.environment["T3_WORKSPACE_PATH"] {
-            candidatePaths.insert(envPath, at: 0)
+            candidatePaths.append(envPath)
         }
+        if let resPath = Bundle.main.resourcePath {
+            candidatePaths.append(resPath)
+        }
+        candidatePaths.append(currentDir)
+        candidatePaths.append(Bundle.main.bundlePath)
+        candidatePaths.append((Bundle.main.bundlePath as NSString).deletingLastPathComponent)
+        candidatePaths.append(((Bundle.main.bundlePath as NSString).deletingLastPathComponent as NSString).appendingPathComponent("../.."))
 
         var workspacePath = currentDir
         for p in candidatePaths {
+            guard !p.isEmpty else { continue }
             let standardized = (p as NSString).standardizingPath
             let check = (standardized as NSString).appendingPathComponent("t3_monitor")
             if fileManager.fileExists(atPath: check) {

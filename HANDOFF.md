@@ -12,7 +12,7 @@ We implemented, tested, and published **`t3-antigravity-context-bar`**, a real-t
 ## What Was Implemented
 
 1. **Telemetry & Protobuf Parsing Engine (`t3_monitor/`)**:
-   - `proto.py`: Pure-Python zero-dependency Protobuf wire-format parser decoding nested Google Gemini `UsageMetadata` (uncached prompt tokens, cached prompt tokens, completion tokens, thought tokens).
+   - `proto.py`: Pure-Python zero-dependency Protobuf wire-format parser decoding nested Google Gemini `UsageMetadata` (uncached prompt tokens, cached prompt tokens, completion tokens, thought tokens). Compatible with Python 3.9 through 3.12+.
    - `db.py`: Read-only (`mode=ro`) SQLite query engine accessing `~/.t3/userdata/state.sqlite` and conversation databases (`gen_metadata`).
    - `engine.py`: Calculates context metrics, cache ratios, and health states:
      - 🟢 **Healthy:** `< 100,000` tokens (`#3fb950`)
@@ -22,8 +22,9 @@ We implemented, tested, and published **`t3-antigravity-context-bar`**, a real-t
 
 2. **Native macOS Menu Bar App (`macos_app/`)**:
    - Built natively in Swift with AppKit (`LSUIElement = true`).
-   - Binary: `bin/T3AntigravityContextBar`
    - App Bundle: `T3AntigravityContextBar.app`
+   - High-resolution Retina icon: `macos_app/Resources/AppIcon.icns`.
+   - Bundled Python backend: `T3AntigravityContextBar.app/Contents/Resources/t3_monitor/` makes the app completely standalone.
    - Colored dot and live status in menu bar (e.g. `● T3: 65.4k (55%)`).
    - Dropdown displays active thread, ASCII progress bar, context breakdown, and quick actions.
    - **Recent Threads:** Collapsed by default under a nested `Recent Threads (N) ▾` submenu to keep the top-level menu uncluttered.
@@ -48,7 +49,9 @@ context-window-tokens/
 ├── LICENSE
 ├── pyproject.toml
 ├── macos_app/
-│   ├── Resources/Info.plist
+│   ├── Resources/
+│   │   ├── Info.plist
+│   │   └── AppIcon.icns
 │   └── Sources/T3ContextBar/
 │       ├── Models.swift
 │       ├── MonitorService.swift
@@ -70,20 +73,26 @@ context-window-tokens/
 
 ---
 
-## Helpful Commands for Next Agent / User
+## Commands to Run and Install
+
 ```bash
 cd /Users/kd/Documents/Coding/context-window-tokens
 
-# Run tests
-make test
-
-# Build & launch native menu bar app
-make build
+# 1. Build and run the macOS Menu Bar app immediately
 make run
 
-# Run terminal dashboard in watch mode
+# 2. Or open directly via macOS 'open' command
+open T3AntigravityContextBar.app
+
+# 3. Install permanently to ~/Applications (launchable via Spotlight or Finder)
+make install
+
+# 4. Stop the running menu bar app
+make stop
+
+# 5. Run terminal dashboard in watch mode
 make watch
 
-# Push updates to GitHub
-git push origin main
+# 6. Run unit tests
+make test
 ```

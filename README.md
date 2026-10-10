@@ -4,7 +4,7 @@ Real-time, zero-dependency macOS menu bar monitor and CLI for **T3 Code** runnin
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Platform: macOS](https://img.shields.io/badge/Platform-macOS-blue.svg)]()
-[![Python: 3.10+](https://img.shields.io/badge/Python-3.10+-brightgreen.svg)]()
+[![Python: 3.9+](https://img.shields.io/badge/Python-3.9+-brightgreen.svg)]()
 
 ---
 
@@ -30,7 +30,7 @@ However, exact token telemetry is recorded locally in real time:
 
 ---
 
-## Quick Start & Installation
+## Quick Start & Running as an Application
 
 Clone the repository:
 ```bash
@@ -38,22 +38,26 @@ git clone https://github.com/o-kd-singh-o/t3-antigravity-context-bar.git
 cd t3-antigravity-context-bar
 ```
 
-### Option 1: Native macOS Status Bar App (Recommended)
-Zero third-party dependencies. Built natively in Swift using AppKit (`LSUIElement = true`).
+### Option 1: Native macOS Application (Recommended)
+Zero third-party dependencies. Built natively in Swift using AppKit (`LSUIElement = true`), with a custom macOS application icon and fully self-contained Python telemetry engine bundled in `Contents/Resources`.
 
 ```bash
-# Build the native app
-make build
-
-# Launch the app
+# Build and run immediately
 make run
-# or
+
+# Or launch the built .app directly
 open T3AntigravityContextBar.app
+
+# Install to your Applications folder (~/Applications or /Applications)
+make install
+
+# Stop the running application
+make stop
 ```
 
 To have it start automatically on login:
 1. Open **System Settings** > **General** > **Login Items**.
-2. Click **+** and add `T3AntigravityContextBar.app`.
+2. Click **+** and add `T3AntigravityContextBar.app` (from `~/Applications/` or the project directory).
 
 ---
 
@@ -166,10 +170,13 @@ t3_monitor/
     └── terminal.py  # ANSI color-coded terminal dashboard
 
 macos_app/
+├── Resources/
+│   ├── Info.plist   # Application bundle metadata and LSUIElement config
+│   └── AppIcon.icns # High-resolution macOS application icon
 └── Sources/T3ContextBar/
     ├── Models.swift              # Decodable DTOs
     ├── MonitorService.swift      # Background worker invoking python monitor engine
-    ├── StatusBarController.swift   # NSStatusBar and NSMenu manager
+    ├── StatusBarController.swift # NSStatusBar and NSMenu manager
     └── main.swift                # AppKit entry point (LSUIElement)
 ```
 
@@ -182,16 +189,3 @@ Unit tests cover every seam without external network or database dependencies:
 - **`tests/test_db.py`**: SQLite reader with synthetic mock databases and multi-thread correlation.
 - **`tests/test_engine.py`**: Threshold logic (healthy/warning/critical), percentage calculation, and headroom calculation.
 - **`tests/test_formatters.py`**: SwiftBar and JSON serialization.
-
-To run the test suite:
-```bash
-make test
-# or
-python3 -m unittest discover tests
-```
-
----
-
-## License
-
-MIT License. See [LICENSE](LICENSE) for details.
