@@ -58,14 +58,16 @@ class StatusBarController: NSObject {
         attrTitle.append(NSAttributedString(string: "● ", attributes: dotAttr))
 
         let textAttr: [NSAttributedString.Key: Any] = [
+            .foregroundColor: NSColor.labelColor,
             .font: NSFont.systemFont(ofSize: 12, weight: .medium)
         ]
         attrTitle.append(NSAttributedString(string: snapshot.menu_bar_title, attributes: textAttr))
 
         button.attributedTitle = attrTitle
 
-        // Rebuild Menu
+        // Rebuild Menu with autoenablesItems disabled so informative items stay enabled & full opacity
         let menu = NSMenu()
+        menu.autoenablesItems = false
 
         // Active thread header
         if let active = snapshot.active_thread, let m = active.metrics {
@@ -73,17 +75,25 @@ class StatusBarController: NSObject {
             let titleItem = NSMenuItem(title: wrappedTitle, action: nil, keyEquivalent: "")
             titleItem.attributedTitle = NSAttributedString(
                 string: wrappedTitle,
-                attributes: [.font: NSFont.boldSystemFont(ofSize: 12)]
+                attributes: [
+                    .font: NSFont.boldSystemFont(ofSize: 12),
+                    .foregroundColor: NSColor.labelColor
+                ]
             )
+            titleItem.isEnabled = true
             menu.addItem(titleItem)
 
-            // Progress bar item (compact single line)
+            // Progress bar item (compact single line, white high-contrast text)
             let progressText = "\(renderProgressBar(pct: m.percentage, width: 8)) \(m.formatted_tokens) / \(formatK(snapshot.config.max_threshold)) (\(Int(m.percentage.rounded()))%)"
             let progressItem = NSMenuItem(title: progressText, action: nil, keyEquivalent: "")
             progressItem.attributedTitle = NSAttributedString(
                 string: progressText,
-                attributes: [.font: NSFont.monospacedSystemFont(ofSize: 11, weight: .regular)]
+                attributes: [
+                    .font: NSFont.monospacedSystemFont(ofSize: 11, weight: .regular),
+                    .foregroundColor: NSColor.labelColor
+                ]
             )
+            progressItem.isEnabled = true
             menu.addItem(progressItem)
 
             // Recommendation badge (compact)
@@ -100,10 +110,11 @@ class StatusBarController: NSObject {
             recItem.attributedTitle = NSAttributedString(
                 string: recText,
                 attributes: [
-                    .foregroundColor: colorFromHex(m.color_hex),
-                    .font: NSFont.systemFont(ofSize: 11, weight: .medium)
+                    .font: NSFont.systemFont(ofSize: 11, weight: .medium),
+                    .foregroundColor: NSColor.labelColor
                 ]
             )
+            recItem.isEnabled = true
             menu.addItem(recItem)
 
             menu.addItem(NSMenuItem.separator())
@@ -112,16 +123,27 @@ class StatusBarController: NSObject {
             let breakdownItem = NSMenuItem(title: "Context Breakdown", action: nil, keyEquivalent: "")
             breakdownItem.attributedTitle = NSAttributedString(
                 string: "Context Breakdown",
-                attributes: [.font: NSFont.systemFont(ofSize: 12)]
+                attributes: [
+                    .font: NSFont.systemFont(ofSize: 12),
+                    .foregroundColor: NSColor.labelColor
+                ]
             )
+            breakdownItem.isEnabled = true
+
             let subMenu = NSMenu()
+            subMenu.autoenablesItems = false
             
             let addSubItem = { (label: String, value: String) in
-                let item = NSMenuItem(title: "\(label): \(value)", action: nil, keyEquivalent: "")
+                let fullText = "\(label): \(value)"
+                let item = NSMenuItem(title: fullText, action: nil, keyEquivalent: "")
                 item.attributedTitle = NSAttributedString(
-                    string: "\(label): \(value)",
-                    attributes: [.font: NSFont.monospacedSystemFont(ofSize: 11, weight: .regular)]
+                    string: fullText,
+                    attributes: [
+                        .font: NSFont.monospacedSystemFont(ofSize: 11, weight: .regular),
+                        .foregroundColor: NSColor.labelColor
+                    ]
                 )
+                item.isEnabled = true
                 subMenu.addItem(item)
             }
 
@@ -137,6 +159,30 @@ class StatusBarController: NSObject {
             menu.addItem(breakdownItem)
 
             menu.addItem(NSMenuItem.separator())
+        } else if let active = snapshot.active_thread {
+            let wrappedTitle = wrapTitle(active.title, maxLineLength: 26, maxLines: 2)
+            let titleItem = NSMenuItem(title: wrappedTitle, action: nil, keyEquivalent: "")
+            titleItem.attributedTitle = NSAttributedString(
+                string: wrappedTitle,
+                attributes: [
+                    .font: NSFont.boldSystemFont(ofSize: 12),
+                    .foregroundColor: NSColor.labelColor
+                ]
+            )
+            titleItem.isEnabled = true
+            menu.addItem(titleItem)
+
+            let noMetricsItem = NSMenuItem(title: "No token telemetry recorded yet", action: nil, keyEquivalent: "")
+            noMetricsItem.attributedTitle = NSAttributedString(
+                string: "No token telemetry recorded yet",
+                attributes: [
+                    .font: NSFont.systemFont(ofSize: 11),
+                    .foregroundColor: NSColor.labelColor
+                ]
+            )
+            noMetricsItem.isEnabled = true
+            menu.addItem(noMetricsItem)
+            menu.addItem(NSMenuItem.separator())
         }
 
         // Recent threads collapsed under a dropdown menu
@@ -149,31 +195,47 @@ class StatusBarController: NSObject {
             let recentThreadsItem = NSMenuItem(title: recentThreadsTitle, action: nil, keyEquivalent: "")
             recentThreadsItem.attributedTitle = NSAttributedString(
                 string: recentThreadsTitle,
-                attributes: [.font: NSFont.systemFont(ofSize: 12, weight: .medium)]
+                attributes: [
+                    .font: NSFont.systemFont(ofSize: 12, weight: .medium),
+                    .foregroundColor: NSColor.labelColor
+                ]
             )
+            recentThreadsItem.isEnabled = true
 
             let recentSubMenu = NSMenu()
+            recentSubMenu.autoenablesItems = false
 
             for t in otherThreads {
                 let tokenDesc = t.metrics != nil ? " (\(t.metrics!.formatted_tokens))" : ""
                 let titleTruncated = t.title.count > 20 ? String(t.title.prefix(18)) + "..." : t.title
-                let itemTitle = "● \(titleTruncated)\(tokenDesc)"
-                let threadItem = NSMenuItem(title: itemTitle, action: nil, keyEquivalent: "")
+                let threadItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
                 
                 let dotColor = t.metrics != nil ? colorFromHex(t.metrics!.color_hex) : NSColor.secondaryLabelColor
-                threadItem.attributedTitle = NSAttributedString(
-                    string: itemTitle,
+                let attrTitle = NSMutableAttributedString()
+                attrTitle.append(NSAttributedString(
+                    string: "● ",
                     attributes: [.foregroundColor: dotColor, .font: NSFont.systemFont(ofSize: 11)]
-                )
+                ))
+                attrTitle.append(NSAttributedString(
+                    string: "\(titleTruncated)\(tokenDesc)",
+                    attributes: [.foregroundColor: NSColor.labelColor, .font: NSFont.systemFont(ofSize: 11)]
+                ))
+                threadItem.attributedTitle = attrTitle
+                threadItem.isEnabled = true
 
                 // Submenu for thread details
                 let tSubMenu = NSMenu()
+                tSubMenu.autoenablesItems = false
                 let addDetail = { (text: String) in
                     let detailItem = NSMenuItem(title: text, action: nil, keyEquivalent: "")
                     detailItem.attributedTitle = NSAttributedString(
                         string: text,
-                        attributes: [.font: NSFont.monospacedSystemFont(ofSize: 10, weight: .regular)]
+                        attributes: [
+                            .font: NSFont.monospacedSystemFont(ofSize: 10, weight: .regular),
+                            .foregroundColor: NSColor.labelColor
+                        ]
                     )
+                    detailItem.isEnabled = true
                     tSubMenu.addItem(detailItem)
                 }
                 addDetail("Title: \(t.title)")
@@ -210,7 +272,17 @@ class StatusBarController: NSObject {
             button.title = "⚠️ T3: Error"
         }
         let menu = NSMenu()
-        menu.addItem(NSMenuItem(title: "Error: \(error.localizedDescription)", action: nil, keyEquivalent: ""))
+        menu.autoenablesItems = false
+        let errorItem = NSMenuItem(title: "Error: \(error.localizedDescription)", action: nil, keyEquivalent: "")
+        errorItem.attributedTitle = NSAttributedString(
+            string: "Error: \(error.localizedDescription)",
+            attributes: [
+                .font: NSFont.systemFont(ofSize: 11),
+                .foregroundColor: NSColor.labelColor
+            ]
+        )
+        errorItem.isEnabled = true
+        menu.addItem(errorItem)
         menu.addItem(NSMenuItem.separator())
         let refreshItem = NSMenuItem(title: "Retry Refresh", action: #selector(refresh), keyEquivalent: "r")
         refreshItem.target = self
@@ -223,7 +295,17 @@ class StatusBarController: NSObject {
 
     private func buildLoadingMenu() {
         let menu = NSMenu()
-        menu.addItem(NSMenuItem(title: "Checking T3 tokens...", action: nil, keyEquivalent: ""))
+        menu.autoenablesItems = false
+        let loadingItem = NSMenuItem(title: "Checking T3 tokens...", action: nil, keyEquivalent: "")
+        loadingItem.attributedTitle = NSAttributedString(
+            string: "Checking T3 tokens...",
+            attributes: [
+                .font: NSFont.systemFont(ofSize: 11),
+                .foregroundColor: NSColor.labelColor
+            ]
+        )
+        loadingItem.isEnabled = true
+        menu.addItem(loadingItem)
         menu.addItem(NSMenuItem.separator())
         let quitItem = NSMenuItem(title: "Quit", action: #selector(quitApp), keyEquivalent: "q")
         quitItem.target = self
