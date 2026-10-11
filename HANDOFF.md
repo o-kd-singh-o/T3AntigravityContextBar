@@ -1,10 +1,10 @@
 # Handoff: T3 Antigravity Context Bar
 
 ## Session Summary & Accomplishments
-We implemented, tested, and published **`t3-antigravity-context-bar`**, a real-time macOS Menu Bar monitor and CLI for T3 Code running with the Google Antigravity provider (Gemini models).
+We implemented, tested, and published **`T3AntigravityContextBar`**, a real-time macOS Menu Bar monitor and CLI for T3 Code running with the Google Antigravity provider (Gemini models).
 
-- **GitHub Repository:** [https://github.com/o-kd-singh-o/t3-antigravity-context-bar](https://github.com/o-kd-singh-o/t3-antigravity-context-bar)
-- **Local Workspace:** `/Users/kd/Documents/Coding/context-window-tokens`
+- **GitHub Repository:** [https://github.com/o-kd-singh-o/T3AntigravityContextBar](https://github.com/o-kd-singh-o/T3AntigravityContextBar)
+- **Local Workspace:** `/Users/kd/Documents/Coding/T3AntigravityContextBar`
 - **License:** MIT
 
 ---
@@ -27,7 +27,7 @@ We implemented, tested, and published **`t3-antigravity-context-bar`**, a real-t
    - Bundled Python backend: `T3AntigravityContextBar.app/Contents/Resources/t3_monitor/` makes the app completely standalone.
    - Colored dot and live status in menu bar (e.g. `● T3: 65.4k (55%)`).
    - Dropdown displays active thread, ASCII progress bar, context breakdown, and quick actions.
-   - **Recent Threads:** Collapsed by default under a nested `Recent Threads (N) ▾` submenu to keep the top-level menu uncluttered.
+   - **Recent Threads:** Collapsed by default under a nested `Recent Threads (N)` submenu to keep the top-level menu uncluttered.
 
 3. **SwiftBar / xbar Plugin (`plugins/swiftbar/`)**:
    - `plugins/swiftbar/t3_tokens.10s.py` ready to be symlinked to `~/Library/Application Support/SwiftBar/plugins/` via `make install-swiftbar`.
@@ -43,7 +43,7 @@ We implemented, tested, and published **`t3-antigravity-context-bar`**, a real-t
 
 ## Repository Structure
 ```
-context-window-tokens/
+T3AntigravityContextBar/
 ├── Makefile
 ├── README.md
 ├── LICENSE
@@ -52,7 +52,7 @@ context-window-tokens/
 │   ├── Resources/
 │   │   ├── Info.plist
 │   │   └── AppIcon.icns
-│   └── Sources/T3ContextBar/
+│   └── Sources/T3AntigravityContextBar/
 │       ├── Models.swift
 │       ├── MonitorService.swift
 │       ├── StatusBarController.swift
@@ -76,7 +76,7 @@ context-window-tokens/
 ## Commands to Run and Install
 
 ```bash
-cd /Users/kd/Documents/Coding/context-window-tokens
+cd /Users/kd/Documents/Coding/T3AntigravityContextBar
 
 # 1. Build and run the macOS Menu Bar app immediately
 make run

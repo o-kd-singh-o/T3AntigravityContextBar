@@ -7,7 +7,7 @@
     <key>CFBundleDisplayName</key>
     <string>T3 Antigravity Context Bar</string>
     <key>CFBundleIdentifier</key>
-    <string>com.antigravity.t3contextbar</string>
+    <string>com.antigravity.T3AntigravityContextBar</string>
     <key>CFBundleVersion</key>
     <string>1.0.0</string>
     <key>CFBundleShortVersionString</key>

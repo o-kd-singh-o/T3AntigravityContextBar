@@ -34,8 +34,8 @@ However, exact token telemetry is recorded locally in real time:
 
 Clone the repository:
 ```bash
-git clone https://github.com/o-kd-singh-o/t3-antigravity-context-bar.git
-cd t3-antigravity-context-bar
+git clone https://github.com/o-kd-singh-o/T3AntigravityContextBar.git
+cd T3AntigravityContextBar
 ```
 
 ### Option 1: Native macOS Application (Recommended)
@@ -130,7 +130,6 @@ Clicking the menu bar item reveals:
   - Lists other running and recent threads with their respective token usage and statuses
 - **Quick Actions:**
   - `🔄 Refresh Now` (`Cmd+R`)
-  - `Open T3 Code` (`Cmd+O`)
   - `Quit T3 Antigravity Context Bar` (`Cmd+Q`)
 
 ---
@@ -173,7 +172,7 @@ macos_app/
 ├── Resources/
 │   ├── Info.plist   # Application bundle metadata and LSUIElement config
 │   └── AppIcon.icns # High-resolution macOS application icon
-└── Sources/T3ContextBar/
+└── Sources/T3AntigravityContextBar/
     ├── Models.swift              # Decodable DTOs
     ├── MonitorService.swift      # Background worker invoking python monitor engine
     ├── StatusBarController.swift # NSStatusBar and NSMenu manager

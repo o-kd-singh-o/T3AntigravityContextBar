@@ -12,7 +12,7 @@ test:
 
 build:
 	@mkdir -p bin $(APP_NAME).app/Contents/MacOS $(APP_NAME).app/Contents/Resources
-	$(SWIFTC) -O -framework AppKit -framework Foundation macos_app/Sources/T3ContextBar/*.swift -o bin/$(APP_NAME)
+	$(SWIFTC) -O -framework AppKit -framework Foundation macos_app/Sources/T3AntigravityContextBar/*.swift -o bin/$(APP_NAME)
 	@cp bin/$(APP_NAME) $(APP_NAME).app/Contents/MacOS/$(APP_NAME)
 	@cp macos_app/Resources/Info.plist $(APP_NAME).app/Contents/Info.plist
 	@cp macos_app/Resources/AppIcon.icns $(APP_NAME).app/Contents/Resources/AppIcon.icns
